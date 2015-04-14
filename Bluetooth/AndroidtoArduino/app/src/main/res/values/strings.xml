@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">AndroidtoArduino</string>
+
+    <string name="hello_world">Hello world!</string>
+    <string name="action_settings">Settings</string>
+    <string name="btn_OFF">Button Off</string>
+    <string name="btn_ON">Button On</string>
+</resources>
