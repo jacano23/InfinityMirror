@@ -111,7 +111,7 @@ void BubbleSort()
         colors[j+1].blue = blue;
         
         ledStrip.write(colors, 120);        
-        delay(1);  
+        delay(20);  
       }
     }
   }
@@ -144,7 +144,7 @@ void QuickSort(int low, int high)
       colors[right].green = green;
       colors[right].blue = blue;
         ledStrip.write(colors, 120);        
-        delay(100);  
+        //delay(100);  
     }
   }
   
