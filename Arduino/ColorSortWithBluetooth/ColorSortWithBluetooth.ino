@@ -33,6 +33,8 @@ PololuLedStrip<12> ledStrip;
 rgb_color colors[LED_COUNT];
 rgb_color color;
 
+int sortDelayAmount = 25;
+
 long redBar = 0;
 long blueBar = 90000L;
 long greenBar = 180000L;
@@ -47,19 +49,22 @@ int  LED = 13;      // LED pin
 int dataNumber; 
 int singleValueMode = 0;
 
-int topWallCount = 11;
-int leftWallCount = 14;
-int bottomWallCount = 12; 
-int rightWallCount = 14;
+int topWallCount;
+int topWallTailCount;
+int leftWallCount;
+int bottomWallCount; 
+int rightWallCount;
 
-int topWallStart = LED_COUNT - topWallCount;
-int topWallEnd = topWallStart + topWallCount;
-int leftWallStart = topWallStart - 1 - leftWallCount;
-int leftWallEnd = leftWallStart + leftWallCount;
-int bottomWallStart = leftWallStart - 1 - bottomWallCount;
-int bottomWallEnd = bottomWallStart + bottomWallCount;
-int rightWallStart = bottomWallStart - 1 - rightWallCount;
-int rightWallEnd = rightWallStart + rightWallCount;
+int topWallStart;
+int topWallEnd;
+int topWallTailStart;
+int topWallTailEnd;
+int leftWallStart;
+int leftWallEnd;
+int bottomWallStart;
+int bottomWallEnd;
+int rightWallStart;
+int rightWallEnd;
 
 
 
@@ -113,7 +118,7 @@ void Sort()
         rgb_color temp = colors[j];
         colors[j] = colors[j-1];
         colors[j-1] = temp;
-        ledStrip.write(colors, 120);         
+        ledStrip.write(colors, LED_COUNT);         
         delay(1);  
       }
     }
@@ -138,27 +143,113 @@ void BubbleSort()
         colors[j+1].green = green;
         colors[j+1].blue = blue;
         
-        ledStrip.write(colors, 120);        
-        //delay(20);  
+        ledStrip.write(colors, LED_COUNT);        
+        delay(sortDelayAmount);  
       }
     }
   }
 }
 
+void InsertionSort()
+{
+  for(int i = 1; i < LED_COUNT; i++)
+  {
+    int j = i;
+    while(j > 0 & Value(colors[j-1]) > Value(colors[j]))
+    {
+      int red = colors[j].red;
+      int blue = colors[j].blue;
+      int green = colors[j].green;
+      colors[j].red = colors[j-1].red;
+      colors[j].green = colors[j-1].green;
+      colors[j].blue = colors[j-1].blue;
+      colors[j-1].red = red;
+      colors[j-1].green = green;
+      colors[j-1].blue = blue;
+      
+      ledStrip.write(colors, LED_COUNT); 
+      delay(sortDelayAmount);
+      j = j - 1;
+    }
+  }
+}
+
+void ShellSort()
+{
+  int gaps [] = { 20, 10, 8, 5, 2, 1 };
+  int numberOfGaps = 6;
+  for(int i = 0; i < numberOfGaps; i++)
+  {
+    for(int k = 0; k < gaps[i]; k++)
+    {
+      for(int l = 1; l < LED_COUNT/gaps[i]; l++)
+      {
+        int j = l*gaps[i] + k;
+        int cont = 1;
+        while(cont)
+        {
+          if(j < LED_COUNT & j - gaps[i] >= 0)
+            cont = 1;
+          else
+            cont = 0;
+          if(cont)
+          {
+            if(j > 0 & Value(colors[j-gaps[i]]) > Value(colors[j]))
+            {
+              int red = colors[j].red;
+              int blue = colors[j].blue;
+              int green = colors[j].green;
+              colors[j].red = colors[j-gaps[i]].red;
+              colors[j].green = colors[j-gaps[i]].green;
+              colors[j].blue = colors[j-gaps[i]].blue;
+              colors[j-gaps[i]].red = red;
+              colors[j-gaps[i]].green = green;
+              colors[j-gaps[i]].blue = blue;
+              
+              ledStrip.write(colors, LED_COUNT); 
+              delay(sortDelayAmount);
+              j = j - gaps[i];
+            }       
+            else
+              cont = 0;    
+          }
+        }        
+      }
+    }
+  }  
+}
+
 void QuickSort(int low, int high)
 {
   if(low == high | low > high)
-    return; 
-    
+    return;     
+  if(low == high + 1 | low == high - 1)
+  {
+      if(Value(colors[low]) > Value(colors[high]))
+      {
+        int red = colors[low].red;
+        int blue = colors[low].blue;
+        int green = colors[low].green;
+        colors[low].red = colors[high].red;
+        colors[low].green = colors[high].green;
+        colors[low].blue = colors[high].blue;
+        colors[high].red = red;
+        colors[high].green = green;
+        colors[high].blue = blue;
+          ledStrip.write(colors, LED_COUNT);  
+        delay(sortDelayAmount);
+      }
+      return;
+  }
   int pivot = low;
   int left = low + 1;
   int right = high;
   
   while(left < right)
   {
-    while(Value(colors[left]) < Value(colors[pivot]))
+    while(Value(colors[left]) < Value(colors[pivot]) & left < LED_COUNT - 1)
       left++;
-    while(Value(colors[right]) > Value(colors[pivot]))
+    while(Value(colors[right]) >= Value(colors[pivot]) & right >= left)
       right--;
     if(left < right)
     {
@@ -171,8 +262,9 @@ void QuickSort(int low, int high)
       colors[right].red = red;
       colors[right].green = green;
       colors[right].blue = blue;
-        ledStrip.write(colors, 120);        
-        //delay(100);  
+        ledStrip.write(colors, LED_COUNT);   
+   //left++;     
+        delay(sortDelayAmount);  
     }
   }
   
@@ -185,8 +277,8 @@ void QuickSort(int low, int high)
   colors[right].red = red;
   colors[right].green = green;
   colors[right].blue = blue;
-        ledStrip.write(colors, 120);        
-        delay(10);  
+        ledStrip.write(colors, LED_COUNT);        
+        delay(sortDelayAmount);  
   
   QuickSort(low, right - 1);
   QuickSort(right + 1, high);
@@ -291,6 +383,8 @@ void TopWall(rgb_color colorInput)
   ZeroLedArray();
   for(int i = topWallStart; i <= topWallEnd; i++)
       colors[i] = colorInput;
+  for(int i = topWallTailStart; i <= topWallTailEnd; i++)
+      colors[i] = colorInput;
   ledStrip.write(colors, LED_COUNT);  
 }
 
@@ -314,6 +408,7 @@ void RightWall(rgb_color colorInput)
 {
   ZeroLedArray();
   for(int i = rightWallStart; i <= rightWallEnd; i++)
+  //for(int i = 10; i <= 30; i++)
       colors[i] = colorInput;
   ledStrip.write(colors, LED_COUNT);  
 }
@@ -362,38 +457,14 @@ void Clockwise(rgb_color inputColor, int delayAmount)
   }
 }
 
-//*****************************************************************************************************
-//*****************************************************************************************************
-//*****************************************************************************************************
-//*****************************************************************************************************
-//*****************************************************************************************************
-//*****************************************************************************************************
-
-void setup()
+void TwoColorSort(rgb_color colorInput1, rgb_color colorInput2)
 {
-  Serial.begin(9600);
   
-  currentValue = 0;
-  command = 0;
-  dataNumber = 0;
-  
-  for(int i = 0; i < numberOfDataValues; i++)
-    dataValues[i] = 0;
-  
-  
-  color.red = 0;
-  color.blue = 0;
-  color.red = 0;
-  for(uint16_t i = 0; i < 120; i++)
-  {
-    colors[i].red = 0;
-    colors[i].green = 0;
-    colors[i].blue = 0;
-  }
-  
-  ledStrip.write(colors, 120);  
-  
-  int maximum = 250;
+}
+
+void RandomizeAll()
+{
+   int maximum = 250;
   
   for(uint16_t i = 0; i < LED_COUNT; i++)
   {
@@ -428,10 +499,41 @@ void setup()
   }
   
   
-  ledStrip.write(colors, 120);   
+  ledStrip.write(colors, LED_COUNT);   
+}
+
+//*****************************************************************************************************
+//*****************************************************************************************************
+//*****************************************************************************************************
+//*****************************************************************************************************
+//*****************************************************************************************************
+//*****************************************************************************************************
+
+void setup()
+{
+  Serial.begin(9600);
+  randomSeed(analogRead(0));
+  currentValue = 0;
+  command = 0;
+  dataNumber = 0;
   
-  //BubbleSort();
-  //QuickSort(0, LED_COUNT - 1);
+  for(int i = 0; i < numberOfDataValues; i++)
+    dataValues[i] = 0;
+  
+  
+  color.red = 0;
+  color.blue = 0;
+  color.red = 0;
+  for(uint16_t i = 0; i < LED_COUNT; i++)
+  {
+    colors[i].red = 0;
+    colors[i].green = 0;
+    colors[i].blue = 0;
+  }
+  
+  ledStrip.write(colors, LED_COUNT);  
+  
+  RandomizeAll();
   
   color.red = 0;
   color.blue = 0;
@@ -441,6 +543,23 @@ void setup()
   zeroColor.red = 0;
   zeroColor.green = 0;
   zeroColor.blue = 0;
+  
+  topWallCount = 10;
+  topWallTailCount = 9;
+  leftWallCount = 27;
+  bottomWallCount = 20; 
+  rightWallCount = 27;
+
+  topWallStart = 0;
+  topWallEnd = topWallStart + topWallCount;
+  topWallTailStart = 88;
+  topWallTailEnd = topWallTailStart + topWallTailCount; 
+  leftWallStart = 60;
+  leftWallEnd = leftWallStart + leftWallCount;
+  bottomWallStart = 39;
+  bottomWallEnd = bottomWallStart + bottomWallCount;
+  rightWallStart = 11;
+  rightWallEnd = rightWallStart + rightWallCount;
 
 }
 
@@ -457,6 +576,8 @@ void loop()
 //**********************************************************************************************
 void ProcessCommand()
 {
+  //Set all to a single color
+  //1.Red.Green.Blue!
   if(dataValues[0] == 1)
   {
     rgb_color singleColor;
@@ -466,7 +587,120 @@ void ProcessCommand()
     dataValues[0] == 0;
     WriteAllLeds(singleColor);
   }
-  else if(dataValues[0] == 2)
+  //Flashes on the goes off
+  //3.Red.Green.Blue.On Delay.Off Delay!
+  else if(dataValues[0] == 3)
+  {
+    rgb_color flashColor;
+    flashColor.red = dataValues[1];
+    flashColor.green = dataValues[2];
+    flashColor.blue = dataValues[3];
+    dataValues[0] == 0;
+    int flashAmount = dataValues[4];
+    int delayAmount = dataValues[5];
+    Flash(flashColor, flashAmount, delayAmount);
+  }
+  //Chase around the mirror
+  //4.Red.Green.Blue.Number of Leds on.Movement delay!
+  else if(dataValues[0] == 4)
+  {
+    rgb_color chaseColor;
+    chaseColor.red = dataValues[1];
+    chaseColor.green = dataValues[2];
+    chaseColor.blue = dataValues[3];
+    int amount = dataValues[4];
+    int delayAmount = dataValues[5];
+    dataValues[0] == 0;
+    Chase(chaseColor, amount, delayAmount);
+  }
+  //Fade - brightens then dims
+  //5.Red.Green.Blue.Delay!
+  else if(dataValues[0] == 5)
+  {
+    rgb_color fadeColor;
+    fadeColor.red = dataValues[1];
+    fadeColor.green = dataValues[2];
+    fadeColor.blue = dataValues[3];
+    dataValues[0] == 0;
+    int delayAmount = dataValues[4];
+    Fade(fadeColor, delayAmount);
+  }
+  //Twinkle - The is the "matrix" effect
+  //6.Red.Green.Blue.number of Leds.transition delay!
+  else if(dataValues[0] == 6)
+  {
+    rgb_color twinkleColor;
+    twinkleColor.red = dataValues[1];
+    twinkleColor.green = dataValues[2];
+    twinkleColor.blue = dataValues[3];
+    dataValues[0] == 0;
+    int amount = dataValues[4];
+    int delayAmount = dataValues[5];
+    Twinkle(twinkleColor, amount, delayAmount);
+  }
+  //Ignore
+  else if(dataValues[0] == 7)
+  {
+    rgb_color inputColor;
+    inputColor.red = dataValues[1];
+    inputColor.green = dataValues[2];
+    inputColor.blue = dataValues[3];
+    TopWall(inputColor);
+  }
+  //Ignore
+  else if(dataValues[0] == 8)
+  {
+    rgb_color inputColor;
+    inputColor.red = dataValues[1];
+    inputColor.green = dataValues[2];
+    inputColor.blue = dataValues[3];
+    LeftWall(inputColor);
+  }
+  //Ignore
+  else if(dataValues[0] == 9)
+  {
+    rgb_color inputColor;
+    inputColor.red = dataValues[1];
+    inputColor.green = dataValues[2];
+    inputColor.blue = dataValues[3];
+    BottomWall(inputColor);
+  }
+  //Ignore
+  else if(dataValues[0] == 10)
+  {
+    rgb_color inputColor;
+    inputColor.red = dataValues[1];
+    inputColor.green = dataValues[2];
+    inputColor.blue = dataValues[3];
+    RightWall(inputColor);
+  }
+  //Counter Clockwise side turns
+  //11.Red.Green.Blue.delay amount!
+  else if(dataValues[0] == 11)
+  {
+    rgb_color inputColor;
+    inputColor.red = dataValues[1];
+    inputColor.green = dataValues[2];
+    inputColor.blue = dataValues[3];
+    dataValues[0] == 0;
+    int delayAmount = dataValues[4];
+    CounterClockwise(inputColor, delayAmount);
+  }
+  //Clockwise side turns
+  //12.Red.Green.Blue.delay amount!
+  else if(dataValues[0] == 12)
+  {
+    rgb_color inputColor;
+    inputColor.red = dataValues[1];
+    inputColor.green = dataValues[2];
+    inputColor.blue = dataValues[3];
+    dataValues[0] == 0;
+    int delayAmount = dataValues[4];
+    Clockwise(inputColor, delayAmount);
+  }  
+  //Bubble Sort - Single Color
+  //101.Red.Green.Blue!
+  else if(dataValues[0] == 101)
   {
     singleValueMode = 1;
     color.red = dataValues[1];
@@ -485,102 +719,102 @@ void ProcessCommand()
     ledStrip.write(colors, LED_COUNT);   
     BubbleSort();
     singleValueMode = 0;
-  }
-  else if(dataValues[0] == 3)
+  }  
+  //Bubble Sort - Gradient
+  //102!
+  else if(dataValues[0] == 102)
   {
-    rgb_color flashColor;
-    flashColor.red = dataValues[1];
-    flashColor.green = dataValues[2];
-    flashColor.blue = dataValues[3];
-    dataValues[0] == 0;
-    int flashAmount = dataValues[4];
-    int delayAmount = dataValues[5];
-    Flash(flashColor, flashAmount, delayAmount);
+   RandomizeAll();
+   BubbleSort();
   }
-  else if(dataValues[0] == 4)
+  //Insertion Sort - Single Color
+  //103.Red.Green.Blue!
+  else if(dataValues[0] == 103)
   {
-    rgb_color chaseColor;
-    chaseColor.red = dataValues[1];
-    chaseColor.green = dataValues[2];
-    chaseColor.blue = dataValues[3];
-    int amount = dataValues[4];
-    int delayAmount = dataValues[5];
-    dataValues[0] == 0;
-    Chase(chaseColor, amount, delayAmount);
-  }
-  else if(dataValues[0] == 5)
+    singleValueMode = 1;
+    color.red = dataValues[1];
+    color.green = dataValues[2];
+    color.blue = dataValues[3];
+    
+    for(int i = 0; i < LED_COUNT; i++)
+    {
+      int numerator = random(1,101);
+      
+      colors[i].red = color.red*numerator/100;
+      colors[i].green = color.green*numerator/100;
+      colors[i].blue = color.blue*numerator/100;
+    }
+      
+    ledStrip.write(colors, LED_COUNT);   
+    InsertionSort();
+    singleValueMode = 0;
+  }  
+  //Insertion Sort - Gradient
+  //104!
+  else if(dataValues[0] == 104)
   {
-    rgb_color fadeColor;
-    fadeColor.red = dataValues[1];
-    fadeColor.green = dataValues[2];
-    fadeColor.blue = dataValues[3];
-    dataValues[0] == 0;
-    int delayAmount = dataValues[4];
-    Fade(fadeColor, delayAmount);
+   RandomizeAll();
+   InsertionSort();
   }
-  else if(dataValues[0] == 6)
+  //Shell Sort - Single Color
+  //105.Red.Green.Blue!
+  else if(dataValues[0] == 105)
   {
-    rgb_color twinkleColor;
-    twinkleColor.red = dataValues[1];
-    twinkleColor.green = dataValues[2];
-    twinkleColor.blue = dataValues[3];
-    dataValues[0] == 0;
-    int amount = dataValues[4];
-    int delayAmount = dataValues[5];
-    Twinkle(twinkleColor, amount, delayAmount);
-  }
-  else if(dataValues[0] == 7)
+    singleValueMode = 1;
+    color.red = dataValues[1];
+    color.green = dataValues[2];
+    color.blue = dataValues[3];
+    
+    for(int i = 0; i < LED_COUNT; i++)
+    {
+      int numerator = random(1,101);
+      
+      colors[i].red = color.red*numerator/100;
+      colors[i].green = color.green*numerator/100;
+      colors[i].blue = color.blue*numerator/100;
+    }
+      
+    ledStrip.write(colors, LED_COUNT);   
+    ShellSort();
+    singleValueMode = 0;
+  }  
+  //Shell Sort - Gradient
+  //106!
+  else if(dataValues[0] == 106)
   {
-    rgb_color inputColor;
-    inputColor.red = dataValues[1];
-    inputColor.green = dataValues[2];
-    inputColor.blue = dataValues[3];
-    TopWall(inputColor);
+   RandomizeAll();
+   ShellSort();
   }
-  else if(dataValues[0] == 8)
+  //Quick Sort - Single Color
+  //107.Red.Green.Blue!
+  else if(dataValues[0] == 107)
   {
-    rgb_color inputColor;
-    inputColor.red = dataValues[1];
-    inputColor.green = dataValues[2];
-    inputColor.blue = dataValues[3];
-    LeftWall(inputColor);
-  }
-  else if(dataValues[0] == 9)
+    singleValueMode = 1;
+    color.red = dataValues[1];
+    color.green = dataValues[2];
+    color.blue = dataValues[3];
+    
+    for(int i = 0; i < LED_COUNT; i++)
+    {
+      int numerator = random(1,101);
+      
+      colors[i].red = color.red*numerator/100;
+      colors[i].green = color.green*numerator/100;
+      colors[i].blue = color.blue*numerator/100;
+    }
+      
+    ledStrip.write(colors, LED_COUNT);   
+    QuickSort(0,LED_COUNT-1);
+    singleValueMode = 0;
+  }  
+  //Quick Sort - Gradient
+  //108!
+  else if(dataValues[0] == 108)
   {
-    rgb_color inputColor;
-    inputColor.red = dataValues[1];
-    inputColor.green = dataValues[2];
-    inputColor.blue = dataValues[3];
-    BottomWall(inputColor);
-  }
-  else if(dataValues[0] == 10)
-  {
-    rgb_color inputColor;
-    inputColor.red = dataValues[1];
-    inputColor.green = dataValues[2];
-    inputColor.blue = dataValues[3];
-    RightWall(inputColor);
-  }
-  else if(dataValues[0] == 11)
-  {
-    rgb_color inputColor;
-    inputColor.red = dataValues[1];
-    inputColor.green = dataValues[2];
-    inputColor.blue = dataValues[3];
-    dataValues[0] == 0;
-    int delayAmount = dataValues[4];
-    CounterClockwise(inputColor, delayAmount);
-  }
-  else if(dataValues[0] == 12)
-  {
-    rgb_color inputColor;
-    inputColor.red = dataValues[1];
-    inputColor.green = dataValues[2];
-    inputColor.blue = dataValues[3];
-    dataValues[0] == 0;
-    int delayAmount = dataValues[4];
-    Clockwise(inputColor, delayAmount);
-  }
+   RandomizeAll();
+   QuickSort(0,LED_COUNT-1);
+  }  
+  
 }
 
 
