@@ -586,6 +586,11 @@ void ProcessCommand()
     singleColor.blue = dataValues[3];
     dataValues[0] == 0;
     WriteAllLeds(singleColor);
+    Serial.println(".......");
+    Serial.println(1);
+    Serial.println(singleColor.red);
+    Serial.println(singleColor.green);
+    Serial.println(singleColor.blue);
   }
   //Flashes on the goes off
   //3.Red.Green.Blue.On Delay.Off Delay!
